@@ -9,12 +9,12 @@ async function AdminAuthGuard() {
   const token = cookieStore.get("admin_token")?.value;
 
   if (!token) {
-    redirect("/admin/login");
+    redirect("/login?role=admin");
   }
 
   const decoded = await verifyToken(token);
   if (!decoded || decoded.role !== "admin") {
-    redirect("/admin/login");
+    redirect("/login?role=admin");
   }
 
   return <AdminDashboard />;
@@ -24,7 +24,7 @@ export default function AdminPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm text-slate-500">
+        <div className="min-h-screen bg-[#09090B] flex items-center justify-center text-sm text-slate-400">
           Verifying admin session...
         </div>
       }

@@ -1,20 +1,35 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import {
   Search,
   MapPin,
-  Filter,
   Loader2,
   CalendarX,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  ChevronDown,
+  Music,
+  Wrench,
+  Utensils,
+  Trophy,
+  Smile,
+  Sparkles,
+  Check,
+  X,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import EventCard, { EventItem } from "@/components/EventCard";
 
-const CATEGORIES = ["All", "Music", "Workshop", "Food", "Sports", "Kids"];
+const CATEGORIES = [
+  { id: "All", label: "All Events", icon: Sparkles },
+  { id: "Music", label: "Music", icon: Music },
+  { id: "Workshop", label: "Workshop", icon: Wrench },
+  { id: "Food", label: "Food", icon: Utensils },
+  { id: "Sports", label: "Sports", icon: Trophy },
+  { id: "Kids", label: "Kids", icon: Smile },
+] as const;
 
 interface UserProfile {
   id: string;
@@ -32,6 +47,8 @@ function EventsBoardContent() {
   const [city, setCity] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [cityOpen, setCityOpen] = useState(false);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -39,6 +56,20 @@ function EventsBoardContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Close city popover when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        cityDropdownRef.current &&
+        !cityDropdownRef.current.contains(e.target as Node)
+      ) {
+        setCityOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     async function loadUser() {
@@ -70,7 +101,9 @@ function EventsBoardContent() {
           limit: "6",
         });
 
-        const res = await fetch("/api/events?" + params.toString());
+        const res = await fetch("/api/events?" + params.toString(), {
+          cache: "no-store",
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load events");
 
@@ -105,6 +138,7 @@ function EventsBoardContent() {
     setCity("All");
     setSearch("");
     setPage(1);
+    setCityOpen(false);
   }
 
   function handleReminderSync(eventId: string, isReminded: boolean) {
@@ -115,137 +149,199 @@ function EventsBoardContent() {
     setUser({ ...user, reminders: nextReminders });
   }
 
+  const hasActiveFilters =
+    category !== "All" || city !== "All" || search.trim() !== "";
+
   return (
     <div className="min-h-screen bg-[#09090B] text-white flex flex-col">
       <Navbar user={user} isAdmin={isAdmin} onUserUpdate={setUser} />
 
       
-      <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-4">
-        <div className="community-wrapper p-6 sm:p-10 text-center shadow-2xl">
+     <section className="relative z-50 px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+        <div className="community-wrapper px-5 py-10 sm:p-12 text-center shadow-2xl relative">
           <div className="community-badge mx-auto mb-4">
             <span>Community Events Board</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight max-w-3xl mx-auto leading-tight">
-            Experience Live Events{" "}
-            <span className="text-gradient-only">Near Your City</span>
+            Discover Live Events{" "}
+            <span className="text-gradient-only">Around You</span>
           </h1>
 
           <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mt-3">
-            Discover acoustic music nights, workshops, street food carnivals,
-            and sports tournaments curated for your local community.
+            Curated music nights, hands-on workshops, street food carnivals,
+            and sports meetups happening in your city.
           </p>
 
-         
-          <div className="mt-8 bg-black/50 backdrop-blur-md border border-slate-800 p-3 sm:p-4 rounded-2xl max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-3 text-left">
-            <div className="md:col-span-5 relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                placeholder="Search title or vibe (e.g., night, AI)..."
-                className="w-full pl-10 pr-4 py-2.5 custom-dark-input text-sm"
-              />
-            </div>
-
-            <div className="md:col-span-3 relative">
-              <MapPin className="w-4 h-4 text-[#4ade80] absolute left-3.5 top-3.5" />
-              <select
-                value={city}
-                onChange={(e) => {
-                  setCity(e.target.value);
-                  setPage(1);
-                }}
-                className="w-full pl-10 pr-4 py-2.5 custom-dark-input text-sm"
-              >
-                <option value="All" className="bg-zinc-900 text-white">
-                  All Cities
-                </option>
-                {cities.map((c) => (
-                  <option key={c} value={c} className="bg-zinc-900 text-white">
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="md:col-span-4 flex items-center gap-2">
-              <div className="relative flex-1">
-                <Filter className="w-4 h-4 text-purple-400 absolute left-3.5 top-3.5" />
-                <select
-                  value={category}
+          
+          <div className="relative z-50 mt-8 max-w-3xl mx-auto">
+            <div className="bg-[#0c0c10]/90 backdrop-blur-xl border border-slate-700/80 focus-within:border-[#4ade80] focus-within:shadow-[0_0_30px_rgba(74,222,128,0.18)] rounded-3xl sm:rounded-full p-2 transition-all duration-300 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-0">
+              
+              <div className="flex-1 flex items-center pl-4 pr-2 py-1.5">
+                <Search className="w-4 h-4 text-[#4ade80] shrink-0 mr-3" />
+                <input
+                  type="text"
+                  value={search}
                   onChange={(e) => {
-                    setCategory(e.target.value);
+                    setSearch(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-10 pr-4 py-2.5 custom-dark-input text-sm"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option
-                      key={cat}
-                      value={cat}
-                      className="bg-zinc-900 text-white"
-                    >
-                      {cat === "All" ? "All Categories" : cat}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Search events, vibes, or keywords (e.g. night)..."
+                  className="w-full bg-transparent text-white placeholder-slate-400 text-sm outline-none"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch("");
+                      setPage(1);
+                    }}
+                    className="p-1 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
-              {(category !== "All" || city !== "All" || search !== "") && (
+              
+              <div className="hidden sm:block w-px h-7 bg-slate-800 mx-1" />
+
+              
+              <div
+                ref={cityDropdownRef}
+               className="relative z-50 flex items-center justify-between sm:justify-start border-t sm:border-t-0 border-slate-800/80 pt-2 sm:pt-0"
+              >
                 <button
                   type="button"
-                  onClick={handleResetFilters}
-                  className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer border border-slate-700"
+                  onClick={() => setCityOpen((prev) => !prev)}
+                  className="flex-1 sm:flex-initial flex items-center justify-between gap-2.5 px-4 py-2 rounded-full hover:bg-white/5 text-xs sm:text-sm font-medium text-slate-200 transition-colors cursor-pointer"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Reset
+                  <span className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-[#4ade80] shrink-0" />
+                    <span>{city === "All" ? "All Cities" : city}</span>
+                  </span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${
+                      cityOpen ? "rotate-180 text-[#4ade80]" : ""
+                    }`}
+                  />
                 </button>
-              )}
-            </div>
-          </div>
 
-        
-          <div className="flex items-center justify-center gap-2 flex-wrap pt-5">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => {
-                  setCategory(cat);
-                  setPage(1);
-                }}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                  category === cat
-                    ? "bg-[#4ade80] text-zinc-950 shadow-[0_0_15px_rgba(74,222,128,0.4)]"
-                    : "bg-white/5 text-slate-300 border border-white/10 hover:border-[#4ade80]/50"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
+               
+                {hasActiveFilters ? (
+                  <button
+                    type="button"
+                    onClick={handleResetFilters}
+                    className="ml-1 px-4 py-2.5 rounded-full bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-semibold inline-flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Reset
+                  </button>
+                ) : (
+                  <div className="ml-1 px-4 py-2.5 rounded-full bg-[#042f2e] border border-[#4ade80]/30 text-[#4ade80] text-xs font-bold shrink-0">
+                    {total} Events
+                  </div>
+                )}
+
+                
+                {cityOpen && (
+                  <div className="absolute right-0 top-full mt-3 w-56 z-50 bg-[#111116]/95 backdrop-blur-2xl border border-slate-700/80 rounded-2xl p-1.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] text-left">
+                    <div className="px-3 py-1.5 text-[11px] font-semibold text-slate-400 border-b border-slate-800/80 mb-1">
+                      Filter by City
+                    </div>
+                    {["All", ...cities].map((c) => {
+                      const isSelected = city === c;
+                      return (
+                        <button
+                          key={c}
+                          type="button"
+                          onClick={() => {
+                            setCity(c);
+                            setPage(1);
+                            setCityOpen(false);
+                          }}
+                          className={`w-full px-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-between transition-colors cursor-pointer ${
+                            isSelected
+                              ? "bg-[#042f2e] text-[#4ade80]"
+                              : "text-slate-300 hover:bg-white/5 hover:text-white"
+                          }`}
+                        >
+                          <span>{c === "All" ? "All Cities" : c}</span>
+                          {isSelected && (
+                            <Check className="w-3.5 h-3.5 text-[#4ade80]" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            
+            <div className="mt-5 flex items-center justify-center gap-2 flex-wrap">
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = category === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => {
+                      setCategory(cat.id);
+                      setPage(1);
+                    }}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold inline-flex items-center gap-2 transition-all duration-200 cursor-pointer ${
+                      isSelected
+                        ? "bg-[#4ade80] text-zinc-950 font-bold shadow-[0_0_20px_rgba(74,222,128,0.35)] scale-[1.03]"
+                        : "bg-white/[0.04] hover:bg-white/[0.09] text-slate-300 border border-white/10 hover:border-white/20"
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
 
-     
+      
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
           <div>
             <h2 className="text-xl font-bold text-white">
               Upcoming Lineup{" "}
               <span className="text-sm font-normal text-[#4ade80]">
-                ({total} active)
+                ({total} showing)
               </span>
             </h2>
             <p className="text-xs text-slate-400">
               Sorted chronologically by nearest upcoming date
             </p>
           </div>
+
+          {hasActiveFilters && (
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+              {category !== "All" && (
+                <span className="px-3 py-1 rounded-full bg-[#042f2e] text-[#4ade80] border border-[#4ade80]/30 font-medium">
+                  Category: {category}
+                </span>
+              )}
+              {city !== "All" && (
+                <span className="px-3 py-1 rounded-full bg-[#042f2e] text-[#4ade80] border border-[#4ade80]/30 font-medium">
+                  City: {city}
+                </span>
+              )}
+              {search && (
+                <span className="px-3 py-1 rounded-full bg-[#042f2e] text-[#4ade80] border border-[#4ade80]/30 font-medium">
+                  Keyword: &ldquo;{search}&rdquo;
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -272,7 +368,7 @@ function EventsBoardContent() {
             </h3>
             <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
               No active upcoming events matched your filter combination. Try
-              resetting your filters.
+              clearing your filters.
             </p>
             <button
               type="button"

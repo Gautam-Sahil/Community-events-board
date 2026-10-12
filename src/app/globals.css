@@ -248,6 +248,35 @@ body {
 .custom-dark-input::placeholder {
   color: #94a3b8;
 }
+.event-datetime {
+  color-scheme: dark;
+  accent-color: #4ade80;
+}
+
+.event-datetime::-webkit-calendar-picker-indicator {
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+}
+
+.event-datetime:focus {
+  outline: none;
+  border-color: rgba(74, 222, 128, 0.7);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.08);
+}
+
+.price-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.price-input::-webkit-inner-spin-button,
+.price-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
 @media screen and (max-width: 768px) {
   .cinion-navbar {

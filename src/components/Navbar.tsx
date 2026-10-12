@@ -12,6 +12,9 @@ import {
   SlidersHorizontal,
   Menu,
   X,
+  Compass,
+  ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
 
 const ALL_CATEGORIES = ["Music", "Workshop", "Food", "Sports", "Kids"];
@@ -116,13 +119,10 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
           EventPulse
         </Link>
 
-   
+        
         <div className="rainbow hidden md:block">
           <div className="cinion-nav-inner">
-            <Link
-              href="/"
-              className={pathname === "/" ? "active-link" : ""}
-            >
+            <Link href="/" className={pathname === "/" ? "active-link" : ""}>
               Explore Events
             </Link>
 
@@ -130,7 +130,7 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
               href="/feed"
               className={pathname === "/feed" ? "active-link" : ""}
             >
-              <Heart className="w-4 h-4 text-[#4ade80]" />
+              
               My Feed
             </Link>
 
@@ -168,89 +168,209 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
               </button>
             </div>
           ) : (
-            <div className="button-bg">
+            <div className="button-bg hidden sm:inline-block">
               <Link href="/login" className="login-btn">
                 Login
               </Link>
             </div>
           )}
 
-         
+          
           <button
             type="button"
-            onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden text-white p-1.5 cursor-pointer"
-            aria-label="Open menu"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden w-11 h-11 rounded-full bg-[#042f2e] border border-[#4ade80]/40 text-[#4ade80] flex items-center justify-center shadow-[0_0_15px_rgba(74,222,128,0.25)] cursor-pointer transition-transform active:scale-90"
+            aria-label="Toggle navigation menu"
           >
-            <Menu className="w-7 h-7" />
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <Menu className="w-6 h-6" />
+            )}
           </button>
         </div>
       </nav>
 
-    
+      
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center gap-6 p-6 md:hidden">
-          <button
-            type="button"
+        <div className="fixed inset-0 z-[999] md:hidden flex justify-end">
+         
+          <div
             onClick={() => setMobileMenuOpen(false)}
-            className="absolute top-6 right-6 text-white p-2 cursor-pointer"
-          >
-            <X className="w-8 h-8" />
-          </button>
+            className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
+          />
 
-          <Link
-            href="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-2xl font-bold text-white hover:text-[#4ade80]"
-          >
-            Explore Events
-          </Link>
+          
+          <div className="relative z-10 w-[88%] max-w-sm h-full bg-[#09090b] border-l border-[#4ade80]/25 flex flex-col justify-between p-6 overflow-y-auto shadow-[-20px_0_50px_rgba(0,0,0,0.9)]">
+            <div>
+              
+              <div className="flex items-center justify-between pb-6 border-b border-white/10">
+                <div>
+                  <span className="logo-gradient text-2xl block">
+                    EventPulse
+                  </span>
+                  <span className="text-[10px] uppercase tracking-[0.25em] text-[#4ade80] font-semibold">
+                    Navigation Deck
+                  </span>
+                </div>
 
-          <Link
-            href="/feed"
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-2xl font-bold text-white hover:text-[#4ade80] flex items-center gap-2"
-          >
-            <Heart className="w-6 h-6 text-[#4ade80]" />
-            My Feed
-          </Link>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-10 h-10 rounded-full bg-[#042f2e] border border-[#4ade80]/50 text-[#4ade80] flex items-center justify-center hover:bg-[#4ade80] hover:text-black transition-all cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-          {user && (
-            <button
-              type="button"
-              onClick={openModal}
-              className="text-2xl font-bold text-white hover:text-[#4ade80] flex items-center gap-2 cursor-pointer"
-            >
-              <SlidersHorizontal className="w-6 h-6 text-[#4ade80]" />
-              Interests ({user.favouriteCategories.length})
-            </button>
-          )}
+             
+              {user && (
+                <div className="mt-5 p-4 rounded-2xl bg-[#042f2e]/40 border border-[#4ade80]/30 flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-[#4ade80] font-bold">
+                      Signed In Member
+                    </p>
+                    <p className="text-sm font-bold text-white mt-0.5">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-slate-400">{user.email}</p>
+                  </div>
+                  <Sparkles className="w-5 h-5 text-[#4ade80]" />
+                </div>
+              )}
 
-          <Link
-            href={isAdmin ? "/admin" : "/login?role=admin"}
-            onClick={() => setMobileMenuOpen(false)}
-            className="text-2xl font-bold text-white hover:text-[#4ade80] flex items-center gap-2"
-          >
-            <ShieldCheck className="w-6 h-6 text-[#4ade80]" />
-            Admin Portal
-          </Link>
+             
+              <div className="mt-6 space-y-3">
+                <Link
+                  href="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`group flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                    pathname === "/"
+                      ? "bg-[#042f2e] border-[#4ade80] text-white shadow-[0_0_20px_rgba(74,222,128,0.15)]"
+                      : "bg-[#111115] border-white/10 text-slate-200 hover:border-[#4ade80]/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center text-[#4ade80]">
+                      <Compass className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-[#4ade80]">
+                        01 // DISCOVER
+                      </span>
+                      <p className="text-base font-bold text-white">
+                        Explore Events
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-slate-400 group-hover:text-[#4ade80]" />
+                </Link>
 
-          {user && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-4 px-6 py-2.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/40 font-semibold text-base"
-            >
-              Logout ({user.name})
-            </button>
-          )}
+                <Link
+                  href="/feed"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`group flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                    pathname === "/feed"
+                      ? "bg-[#042f2e] border-[#4ade80] text-white shadow-[0_0_20px_rgba(74,222,128,0.15)]"
+                      : "bg-[#111115] border-white/10 text-slate-200 hover:border-[#4ade80]/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center text-[#4ade80]">
+                      <Heart className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-[#4ade80]">
+                        02 // PERSONALIZED
+                      </span>
+                      <p className="text-base font-bold text-white">My Feed</p>
+                    </div>
+                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-slate-400 group-hover:text-[#4ade80]" />
+                </Link>
+
+                {user && (
+                  <button
+                    type="button"
+                    onClick={openModal}
+                    className="w-full group flex items-center justify-between p-4 rounded-2xl border bg-[#111115] border-white/10 text-left hover:border-[#4ade80]/50 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center text-[#4ade80]">
+                        <SlidersHorizontal className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-[#4ade80]">
+                          03 // PREFERENCES
+                        </span>
+                        <p className="text-base font-bold text-white">
+                          My Interests ({user.favouriteCategories.length})
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-5 h-5 text-slate-400 group-hover:text-[#4ade80]" />
+                  </button>
+                )}
+
+                <Link
+                  href={isAdmin ? "/admin" : "/login?role=admin"}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`group flex items-center justify-between p-4 rounded-2xl border transition-all ${
+                    pathname.startsWith("/admin")
+                      ? "bg-[#042f2e] border-[#4ade80] text-white"
+                      : "bg-[#111115] border-white/10 text-slate-200 hover:border-[#4ade80]/50"
+                  }`}
+                >
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-xl bg-black/50 border border-white/10 flex items-center justify-center text-[#4ade80]">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-widest text-[#4ade80]">
+                        04 // MANAGEMENT
+                      </span>
+                      <p className="text-base font-bold text-white">
+                        Admin Portal
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowUpRight className="w-5 h-5 text-slate-400 group-hover:text-[#4ade80]" />
+                </Link>
+              </div>
+            </div>
+
+            
+            <div className="pt-6 border-t border-white/10 mt-6">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="w-full py-3.5 px-4 rounded-2xl bg-red-500/15 border border-red-500/40 text-red-300 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-500/25 cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out ({user.name})
+                </button>
+              ) : (
+                <div className="button-bg w-full">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="login-btn w-full justify-center py-3.5 text-sm font-bold"
+                  >
+                    Login / Register Account
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
       
       {showCategoryModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-[#111115] rounded-3xl max-w-md w-full p-7 shadow-2xl border border-slate-800 text-white">
+        <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#111115] rounded-3xl max-w-md w-full p-7 shadow-2xl border border-[#4ade80]/30 text-white">
             <h2 className="text-xl font-bold text-white">
               Pick Your Favourite Categories
             </h2>

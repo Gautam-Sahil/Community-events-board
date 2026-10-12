@@ -1,6 +1,5 @@
 "use client";
 
-
 import { useState, useEffect, Suspense } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -15,7 +14,10 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Palette,
+  QrCode,
+  RotateCcw,
+  Layers,
+  Sticker,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { formatIndianPrice, formatEventDate } from "@/lib/format";
@@ -26,35 +28,57 @@ type ThemeKey = "sunset" | "ocean" | "midnight";
 const THEMES: {
   id: ThemeKey;
   name: string;
+  subtitle: string;
   bgStyle: string;
-  badge: string;
+  accentColor: string;
+  ringClass: string;
+  swatches: [string, string, string];
 }[] = [
   {
     id: "sunset",
     name: "Sunset Glow",
-    bgStyle: "linear-gradient(135deg, #f43f5e 0%, #f97316 50%, #f59e0b 100%)",
-    badge: "bg-white/20 text-white border-white/30",
+    subtitle: "Solar Crimson & Amber Foil",
+    bgStyle:
+      "linear-gradient(145deg, #be123c 0%, #ea580c 52%, #d97706 100%)",
+    accentColor: "#fb923c",
+    ringClass: "border-orange-400 bg-orange-500/10",
+    swatches: ["#f43f5e", "#f97316", "#f59e0b"],
   },
   {
     id: "ocean",
     name: "Ocean Breeze",
-    bgStyle: "linear-gradient(135deg, #042f2e 0%, #0d9488 50%, #4ade80 100%)",
-    badge: "bg-black/30 text-white border-white/30",
+    subtitle: "Emerald Cyber & Deep Teal",
+    bgStyle:
+      "linear-gradient(145deg, #042f2e 0%, #0f766e 50%, #10b981 100%)",
+    accentColor: "#4ade80",
+    ringClass: "border-[#4ade80] bg-[#042f2e]/50",
+    swatches: ["#042f2e", "#0d9488", "#4ade80"],
   },
   {
     id: "midnight",
     name: "Midnight Neon",
-    bgStyle: "linear-gradient(135deg, #301469 0%, #1e1b4b 50%, #09090b 100%)",
-    badge: "bg-indigo-500/30 text-indigo-100 border-indigo-400/30",
+    subtitle: "Obsidian Violet & Cyber Indigo",
+    bgStyle:
+      "linear-gradient(145deg, #09090b 0%, #1e1b4b 50%, #581c87 100%)",
+    accentColor: "#a855f7",
+    ringClass: "border-purple-400 bg-purple-500/10",
+    swatches: ["#09090b", "#312e81", "#7e22ce"],
   },
 ];
 
 const STICKERS = [
-  { id: "🎸", label: "Rock Guitar" },
-  { id: "🍕", label: "Foodie Slice" },
-  { id: "🎉", label: "Party Popper" },
-  { id: "🔥", label: "Lit Fire" },
-  { id: "✨", label: "Sparkle Magic" },
+  { id: "🎸", label: "Acoustic Vibe" },
+  { id: "🍕", label: "Street Foodie" },
+  { id: "🎉", label: "Festival Crew" },
+  { id: "🔥", label: "Mainstage Heat" },
+  { id: "✨", label: "VIP All-Access" },
+];
+
+// Organic die-cut sticker angles & positions on the pass
+const STICKER_PLACEMENTS = [
+  { rotate: "-10deg", translateY: "0px" },
+  { rotate: "8deg", translateY: "-6px" },
+  { rotate: "-5deg", translateY: "2px" },
 ];
 
 interface UserProfile {
@@ -82,6 +106,15 @@ function EventDetailContent() {
   const [stickers, setStickers] = useState<string[]>([]);
   const [savingDesign, setSavingDesign] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
+
+  // Interactive 3D Tilt & Holographic Glare State
+  const [tilt, setTilt] = useState({
+    rotateX: 0,
+    rotateY: 0,
+    glareX: 50,
+    glareY: 30,
+    isHovering: false,
+  });
 
   useEffect(() => {
     if (!id) return;
@@ -142,7 +175,7 @@ function EventDetailContent() {
     );
 
     if (!user) {
-      setSaveStatus("Saved on this device");
+      setSaveStatus("Saved to browser storage");
       setTimeout(() => setSaveStatus(""), 2500);
       return;
     }
@@ -160,7 +193,7 @@ function EventDetailContent() {
       });
 
       if (res.ok) {
-        setSaveStatus("Design synced to account!");
+        setSaveStatus("Synced to your account");
         setTimeout(() => setSaveStatus(""), 2500);
       }
     } finally {
@@ -184,6 +217,37 @@ function EventDetailContent() {
     const next = stickers.filter((_, idx) => idx !== indexToRemove);
     setStickers(next);
     persistCardDesign(theme, next);
+  }
+
+  function handleCardMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -8;
+    const rotateY = ((x - centerX) / centerX) * 8;
+    const glareX = Math.round((x / rect.width) * 100);
+    const glareY = Math.round((y / rect.height) * 100);
+
+    setTilt({
+      rotateX,
+      rotateY,
+      glareX,
+      glareY,
+      isHovering: true,
+    });
+  }
+
+  function handleCardMouseLeave() {
+    setTilt({
+      rotateX: 0,
+      rotateY: 0,
+      glareX: 50,
+      glareY: 30,
+      isHovering: false,
+    });
   }
 
   async function handleRemindToggle() {
@@ -220,6 +284,7 @@ function EventDetailContent() {
 
   const activeThemeObj =
     THEMES.find((t) => t.id === theme) || THEMES[0];
+  const passSerial = id ? id.slice(-6).toUpperCase() : "EP2026";
 
   return (
     <div className="min-h-screen bg-[#09090B] text-white flex flex-col">
@@ -336,177 +401,353 @@ function EventDetailContent() {
               </div>
             </div>
 
-            
-            <section className="bg-[#111115] rounded-3xl border border-slate-800 p-6 sm:p-8 shadow-2xl">
-              <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          
+            <section className="rounded-3xl border border-slate-800/90 bg-[#0c0c10] overflow-hidden shadow-2xl">
+              
+              <div className="px-6 sm:px-8 py-5 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-4 bg-[#111116]">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-[#042f2e] text-[#4ade80] border border-[#4ade80]/30">
-                    <Palette className="w-5 h-5" />
-                  </div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#4ade80] shadow-[0_0_10px_#4ade80]" />
                   <div>
-                    <h2 className="text-xl font-extrabold text-white">
-                      Design Your Event Pass Card
+                    <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-[#4ade80] block">
+                      INTERACTIVE COLLECTIBLE STUDIO
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+                      Customize Your Collectible Event Pass
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-400">
-                      Switch between 3 background themes and add up to 3
-                      stickers. Saved across refreshes!
-                    </p>
                   </div>
                 </div>
 
-                {(savingDesign || saveStatus) && (
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-[#042f2e] text-[#4ade80] border border-[#4ade80]/30">
-                    {savingDesign ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Check className="w-3.5 h-3.5" />
-                    )}
-                    {savingDesign ? "Saving..." : saveStatus}
+                <div className="flex items-center gap-3">
+                  {(savingDesign || saveStatus) && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3.5 py-1.5 rounded-full bg-[#042f2e] text-[#4ade80] border border-[#4ade80]/30">
+                      {savingDesign ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Check className="w-3.5 h-3.5" />
+                      )}
+                      {savingDesign ? "Syncing..." : saveStatus}
+                    </span>
+                  )}
+
+                  <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 bg-black/50 px-3 py-1.5 rounded-full border border-white/10">
+                    PASS ID #{passSerial}
                   </span>
-                )}
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-5 space-y-6">
+             
+              <div className="grid grid-cols-1 lg:grid-cols-12">
+               
+                <div className="lg:col-span-6 p-6 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-800/80 flex flex-col justify-between space-y-8">
+                  
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                      1. Choose Background Theme (3 Options)
-                    </label>
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {THEMES.map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          onClick={() => handleThemeChange(t.id)}
-                          className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
-                            theme === t.id
-                              ? "border-[#4ade80] bg-[#042f2e]/40"
-                              : "border-slate-800 bg-slate-900/50 hover:border-slate-700"
-                          }`}
-                        >
-                          <div
-                            className="h-8 w-full rounded-lg mb-2"
-                            style={{ background: t.bgStyle }}
-                          />
-                          <p className="text-xs font-bold text-white truncate">
-                            {t.name}
-                          </p>
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-between mb-3.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <Layers className="w-4 h-4 text-[#4ade80]" />
+                        01. Select Foil Finish
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">
+                        {activeThemeObj.name}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      {THEMES.map((t) => {
+                        const isSelected = theme === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => handleThemeChange(t.id)}
+                            className={`w-full p-3.5 rounded-2xl border text-left transition-all flex items-center justify-between gap-4 cursor-pointer ${
+                              isSelected
+                                ? `\${t.ringClass} shadow-lg`
+                                : "border-slate-800/90 bg-[#121218] hover:border-slate-700"
+                            }`}
+                          >
+                            <div className="flex items-center gap-3.5">
+                              
+                              <div
+                                className="w-12 h-12 rounded-xl shrink-0 border border-white/20 shadow-inner relative overflow-hidden"
+                                style={{ background: t.bgStyle }}
+                              >
+                                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.35),transparent_60%)]" />
+                              </div>
+
+                              <div>
+                                <p className="text-sm font-bold text-white flex items-center gap-2">
+                                  {t.name}
+                                  {isSelected && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white font-semibold">
+                                      Active
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  {t.subtitle}
+                                </p>
+                              </div>
+                            </div>
+
+                           
+                            <div className="flex items-center -space-x-1.5 shrink-0">
+                              {t.swatches.map((hex, i) => (
+                                <span
+                                  key={i}
+                                  className="w-4 h-4 rounded-full border border-black/60"
+                                  style={{ backgroundColor: hex }}
+                                />
+                              ))}
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
+                  
                   <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                        2. Tap to Add Stickers ({stickers.length}/3 Added)
-                      </label>
-                      {stickers.length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStickers([]);
-                            persistCardDesign(theme, []);
-                          }}
-                          className="text-xs font-semibold text-rose-400 hover:underline cursor-pointer"
-                        >
-                          Clear All
-                        </button>
-                      )}
+                    <div className="flex items-center justify-between mb-3.5">
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <Sticker className="w-4 h-4 text-[#4ade80]" />
+                        02. Stamp Die-Cut Stickers
+                      </span>
+
+                      <div className="flex items-center gap-3">
+                        
+                        <div className="flex items-center gap-1">
+                          {[0, 1, 2].map((slot) => (
+                            <span
+                              key={slot}
+                              className={`w-2 h-2 rounded-full transition-colors ${
+                                slot < stickers.length
+                                  ? "bg-[#4ade80] shadow-[0_0_8px_#4ade80]"
+                                  : "bg-slate-700"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-mono text-slate-400">
+                          {stickers.length}/3
+                        </span>
+
+                        {stickers.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setStickers([]);
+                              persistCardDesign(theme, []);
+                            }}
+                            className="text-xs font-semibold text-rose-400 hover:text-rose-300 inline-flex items-center gap-1 cursor-pointer"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            Reset
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-5 gap-2.5">
                       {STICKERS.map((s) => {
+                        const countOnCard = stickers.filter(
+                          (item) => item === s.id
+                        ).length;
                         const disabled = stickers.length >= 3;
+
                         return (
                           <button
                             key={s.id}
                             type="button"
                             disabled={disabled}
                             onClick={() => handleAddSticker(s.id)}
-                            title={s.label}
-                            className="p-3 rounded-2xl border border-slate-800 bg-slate-900/60 hover:border-[#4ade80] hover:bg-[#042f2e]/40 disabled:opacity-35 disabled:cursor-not-allowed transition-all flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-90"
+                            className="group relative p-3 rounded-2xl border border-slate-800 bg-[#121218] hover:border-[#4ade80]/60 hover:bg-[#042f2e]/30 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer active:scale-90"
                           >
-                            <span className="text-2xl">{s.id}</span>
+                            {countOnCard > 0 && (
+                              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#4ade80] text-zinc-950 text-[10px] font-extrabold flex items-center justify-center shadow">
+                                ×{countOnCard}
+                              </span>
+                            )}
+                            <span className="text-2xl filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform">
+                              {s.id}
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-400 group-hover:text-white truncate w-full text-center">
+                              {s.label.split(" ")[0]}
+                            </span>
                           </button>
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-2">
-                      Tip: Tap any sticker on the live preview card to remove
-                      it.
+
+                    <p className="text-xs text-slate-500 mt-3">
+                      Hover over the pass to tilt it in 3D. Click any stamped
+                      sticker directly on the pass to peel it off.
                     </p>
                   </div>
                 </div>
 
-                {/* Live Animated Preview Card */}
-                <div className="lg:col-span-7 flex justify-center">
+                
+                <div
+                  className="lg:col-span-6 p-6 sm:p-10 flex flex-col items-center justify-center relative overflow-hidden"
+                  style={{
+                    backgroundImage:
+                      "radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)",
+                    backgroundSize: "20px 20px",
+                  }}
+                >
+                 
                   <div
+                    className="w-72 h-72 rounded-full blur-[90px] opacity-35 absolute pointer-events-none transition-all duration-700"
                     style={{ background: activeThemeObj.bgStyle }}
-                    className="w-full max-w-md rounded-3xl p-6 sm:p-8 text-white shadow-2xl transition-all duration-500 transform hover:scale-[1.01] relative overflow-hidden border border-white/15"
-                  >
-                    <div className="w-40 h-40 rounded-full bg-white/10 absolute -top-12 -right-12 blur-xl pointer-events-none" />
-                    <div className="w-32 h-32 rounded-full bg-black/20 absolute -bottom-10 -left-10 blur-lg pointer-events-none" />
+                  />
 
-                    <div className="relative z-10">
-                      <div className="flex items-center justify-between gap-2 mb-6">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-xs ${activeThemeObj.badge}`}
-                        >
+                  
+                  <div
+                    onMouseMove={handleCardMouseMove}
+                    onMouseLeave={handleCardMouseLeave}
+                    style={{
+                      transform: `perspective(1100px) rotateX(${tilt.rotateX}deg) rotateY(${tilt.rotateY}deg) scale(${
+                        tilt.isHovering ? 1.02 : 1
+                      })`,
+                      transition: tilt.isHovering
+                        ? "transform 0.08s ease-out"
+                        : "transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)",
+                    }}
+                    className="w-full max-w-[360px] rounded-[28px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] relative overflow-hidden border border-white/25 select-none"
+                  >
+                   
+                    <div
+                      className="absolute inset-0 transition-all duration-500"
+                      style={{ background: activeThemeObj.bgStyle }}
+                    />
+
+                    
+                    <div className="absolute inset-x-0 top-0 h-44 opacity-25 mix-blend-overlay pointer-events-none">
+                      <img
+                        src={event.imageUrl}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
+                    </div>
+
+                   
+                    <div
+                      className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                      style={{
+                        opacity: tilt.isHovering ? 0.55 : 0.2,
+                        background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.08) 35%, transparent 65%)`,
+                      }}
+                    />
+
+                    
+                    <div className="relative z-10 p-6">
+                      
+                      <div className="w-16 h-3 rounded-full bg-[#0c0c10] border border-white/25 mx-auto mb-5 shadow-inner" />
+
+                      
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-black/35 text-white border border-white/25 backdrop-blur-md">
                           <Sparkles className="w-3 h-3 inline mr-1" />
-                          {event.category} Pass
+                          {event.category} VIP
                         </span>
 
-                        <span className="text-xs font-bold bg-black/35 px-3 py-1 rounded-full backdrop-blur-xs">
+                        <span className="font-mono text-xs font-extrabold px-3 py-1 rounded-full bg-white text-zinc-950 shadow-sm">
                           {formatIndianPrice(event.price)}
                         </span>
                       </div>
 
-                      <h3 className="text-2xl font-extrabold leading-snug drop-shadow-xs">
-                        {event.title}
-                      </h3>
-
-                      <div className="mt-4 space-y-1.5 text-sm text-white/90">
-                        <p className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 shrink-0" />
-                          {formatEventDate(event.date)}
+                    
+                      <div className="mt-5">
+                        <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/70">
+                          OFFICIAL ACCESS PASS
                         </p>
-                        <p className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 shrink-0" />
-                          {event.city}
-                        </p>
+                        <h3 className="text-2xl font-extrabold text-white leading-tight mt-1 drop-shadow-sm">
+                          {event.title}
+                        </h3>
                       </div>
 
-                      <div className="mt-6 pt-5 border-t border-white/20 flex items-center justify-between min-h-[60px]">
-                        <div className="flex items-center gap-3">
-                          {stickers.length === 0 ? (
-                            <span className="text-xs text-white/75 italic">
-                              Tap stickers on the left to decorate your card...
+                      <div className="mt-4 grid grid-cols-2 gap-2 p-3 rounded-2xl bg-black/25 border border-white/15 backdrop-blur-md text-xs">
+                        <div>
+                          <span className="text-[10px] uppercase tracking-wider text-white/60 block">
+                            DATE & TIME
+                          </span>
+                          <span className="font-bold text-white flex items-center gap-1 mt-0.5">
+                            <Calendar className="w-3 h-3 shrink-0" />
+                            <span className="truncate">
+                              {formatEventDate(event.date)}
                             </span>
-                          ) : (
-                            stickers.map((emoji, idx) => (
-                              <button
-                                key={`${emoji}-${idx}`}
-                                type="button"
-                                onClick={() => handleRemoveSticker(idx)}
-                                title="Click to remove sticker"
-                                className="group relative w-12 h-12 rounded-2xl bg-white/20 hover:bg-red-500/40 backdrop-blur-md border border-white/30 flex items-center justify-center text-2xl shadow-sm transition-all duration-300 animate-bounce cursor-pointer"
-                                style={{
-                                  animationDuration: `${1.8 + idx * 0.3}s`,
-                                }}
-                              >
-                                <span>{emoji}</span>
-                                <span className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-600 text-white flex items-center justify-center text-[10px]">
-                                  <X className="w-2.5 h-2.5" />
-                                </span>
-                              </button>
-                            ))
-                          )}
+                          </span>
                         </div>
+                        <div>
+                          <span className="text-[10px] uppercase tracking-wider text-white/60 block">
+                            CITY VENUE
+                          </span>
+                          <span className="font-bold text-white flex items-center gap-1 mt-0.5">
+                            <MapPin className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{event.city}</span>
+                          </span>
+                        </div>
+                      </div>
 
-                        <span className="text-[11px] font-semibold uppercase tracking-widest text-white/80">
-                          {activeThemeObj.name}
+                     
+                      <div className="mt-5 min-h-[76px] rounded-2xl bg-black/20 border border-dashed border-white/25 px-4 py-3 flex items-center justify-between">
+                        {stickers.length === 0 ? (
+                          <p className="text-xs text-white/75 italic mx-auto text-center">
+                            Tap stickers in the studio to stamp your pass
+                          </p>
+                        ) : (
+                          <div className="flex items-center justify-center gap-4 w-full">
+                            {stickers.map((emoji, idx) => {
+                              const placement =
+                                STICKER_PLACEMENTS[
+                                  idx % STICKER_PLACEMENTS.length
+                                ];
+                              return (
+                                <button
+                                  key={`${emoji}-${idx}`}
+                                  type="button"
+                                  onClick={() => handleRemoveSticker(idx)}
+                                  title="Click to peel off sticker"
+                                  style={{
+                                    transform: `rotate(${placement.rotate}) translateY(${placement.translateY})`,
+                                  }}
+                                  className="group relative w-13 h-13 rounded-2xl bg-white text-2xl flex items-center justify-center shadow-[0_8px_20px_rgba(0,0,0,0.45)] border-2 border-white hover:scale-110 transition-all cursor-pointer"
+                                >
+                                  <span>{emoji}</span>
+                                  <span className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-2 -right-2 w-5 h-5 rounded-full bg-rose-600 text-white flex items-center justify-center shadow">
+                                    <X className="w-3 h-3" />
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+    
+                    <div className="relative flex items-center justify-between my-1">
+                      <div className="w-5 h-5 rounded-full bg-[#0c0c10] -ml-2.5 border-r border-white/25" />
+                      <div className="flex-1 border-t-2 border-dashed border-white/30 mx-2" />
+                      <div className="w-5 h-5 rounded-full bg-[#0c0c10] -mr-2.5 border-l border-white/25" />
+                    </div>
+
+                    {/* Ticket Stub Footer with Attendee Name & QR/Barcode */}
+                    <div className="relative z-10 px-6 pb-6 pt-3 bg-black/30 backdrop-blur-md flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/60 block">
+                          PASS HOLDER // {activeThemeObj.name.toUpperCase()}
                         </span>
+                        <p className="text-sm font-extrabold text-white truncate mt-0.5">
+                          {user ? user.name : "VIP COMMUNITY GUEST"}
+                        </p>
+                        <span className="text-[10px] font-mono text-white/70">
+                          ADMIT ONE • #{passSerial}
+                        </span>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-white text-zinc-950 shrink-0 shadow">
+                        <QrCode className="w-8 h-8" />
                       </div>
                     </div>
                   </div>
