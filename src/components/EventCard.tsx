@@ -11,6 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { formatIndianPrice, formatEventDate } from "@/lib/format";
+import { fetchJson } from "@/lib/fetchJson";
 
 export interface EventItem {
   _id: string;
@@ -55,17 +56,19 @@ export default function EventCard({
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/user/reminders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: "Bearer " + token } : {}),
-        },
-        body: JSON.stringify({ eventId: event._id }),
-      });
+      const { ok, data } = await fetchJson<{ error?: string }>(
+        "/api/user/reminders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: "Bearer " + token } : {}),
+          },
+          body: JSON.stringify({ eventId: event._id }),
+        }
+      );
 
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(
           data.error ||
             (isLoggedIn

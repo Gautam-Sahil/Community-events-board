@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "super_secret_fyerx_jwt_key_2026_community_board"
+  process.env.JWT_SECRET || "super_secret_jwt_key_2026_community_board"
 );
 
 export interface JWTPayload {

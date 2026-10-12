@@ -22,6 +22,7 @@ import {
 import Navbar from "@/components/Navbar";
 import { formatIndianPrice, formatEventDate } from "@/lib/format";
 import { EventItem } from "@/components/EventCard";
+import { fetchJson } from "@/lib/fetchJson";
 
 type ThemeKey = "sunset" | "ocean" | "midnight";
 
@@ -74,7 +75,6 @@ const STICKERS = [
   { id: "✨", label: "VIP All-Access" },
 ];
 
-// Organic die-cut sticker angles & positions on the pass
 const STICKER_PLACEMENTS = [
   { rotate: "-10deg", translateY: "0px" },
   { rotate: "8deg", translateY: "-6px" },
@@ -107,7 +107,6 @@ function EventDetailContent() {
   const [savingDesign, setSavingDesign] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
 
-  // Interactive 3D Tilt & Holographic Glare State
   const [tilt, setTilt] = useState({
     rotateX: 0,
     rotateY: 0,
@@ -128,28 +127,33 @@ function EventDetailContent() {
           ? { Authorization: "Bearer " + token }
           : {};
 
-        const [meRes, eventRes] = await Promise.all([
-          fetch("/api/auth/me", { headers }),
-          fetch("/api/events/" + id, { headers }),
-        ]);
+        const meResult = await fetchJson<{
+          user: UserProfile | null;
+          isAdmin: boolean;
+        }>("/api/auth/me", { headers });
 
-        if (meRes.ok) {
-          const meData = await meRes.json();
-          setUser(meData.user);
-          setIsAdmin(meData.isAdmin);
+        if (meResult.ok) {
+          setUser(meResult.data.user);
+          setIsAdmin(meResult.data.isAdmin);
         }
 
-        const eventData = await eventRes.json();
-        if (!eventRes.ok) {
-          throw new Error(eventData.error || "Event not found");
+        const eventResult = await fetchJson<{
+          event?: EventItem;
+          isReminded?: boolean;
+          cardDesign?: { theme: ThemeKey; stickers: string[] } | null;
+          error?: string;
+        }>("/api/events/" + id, { headers });
+
+        if (!eventResult.ok || !eventResult.data.event) {
+          throw new Error(eventResult.data.error || "Event not found");
         }
 
-        setEvent(eventData.event);
-        setReminded(Boolean(eventData.isReminded));
+        setEvent(eventResult.data.event);
+        setReminded(Boolean(eventResult.data.isReminded));
 
-        if (eventData.cardDesign) {
-          setTheme(eventData.cardDesign.theme);
-          setStickers(eventData.cardDesign.stickers || []);
+        if (eventResult.data.cardDesign) {
+          setTheme(eventResult.data.cardDesign.theme);
+          setStickers(eventResult.data.cardDesign.stickers || []);
         } else {
           const localSaved = localStorage.getItem("card_design_" + id);
           if (localSaved) {
@@ -183,7 +187,7 @@ function EventDetailContent() {
     setSavingDesign(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/events/" + id, {
+      const { ok } = await fetchJson("/api/events/" + id, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -192,7 +196,7 @@ function EventDetailContent() {
         body: JSON.stringify({ theme: nextTheme, stickers: nextStickers }),
       });
 
-      if (res.ok) {
+      if (ok) {
         setSaveStatus("Synced to your account");
         setTimeout(() => setSaveStatus(""), 2500);
       }
@@ -258,17 +262,19 @@ function EventDetailContent() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("/api/user/reminders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: "Bearer " + token } : {}),
-        },
-        body: JSON.stringify({ eventId: id }),
-      });
+      const { ok, data } = await fetchJson<{ error?: string }>(
+        "/api/user/reminders",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: "Bearer " + token } : {}),
+          },
+          body: JSON.stringify({ eventId: id }),
+        }
+      );
 
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         throw new Error(
           data.error || "Please log in first to save event reminders"
         );
@@ -318,7 +324,6 @@ function EventDetailContent() {
           </div>
         ) : (
           <div className="space-y-10">
-           
             <div className="bg-[#111115] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl grid grid-cols-1 lg:grid-cols-12">
               <div className="lg:col-span-6 h-64 sm:h-80 lg:h-auto bg-zinc-900 relative">
                 <img
@@ -401,9 +406,7 @@ function EventDetailContent() {
               </div>
             </div>
 
-          
             <section className="rounded-3xl border border-slate-800/90 bg-[#0c0c10] overflow-hidden shadow-2xl">
-              
               <div className="px-6 sm:px-8 py-5 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-4 bg-[#111116]">
                 <div className="flex items-center gap-3">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#4ade80] shadow-[0_0_10px_#4ade80]" />
@@ -435,11 +438,8 @@ function EventDetailContent() {
                 </div>
               </div>
 
-             
               <div className="grid grid-cols-1 lg:grid-cols-12">
-               
                 <div className="lg:col-span-6 p-6 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-800/80 flex flex-col justify-between space-y-8">
-                  
                   <div>
                     <div className="flex items-center justify-between mb-3.5">
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
@@ -466,7 +466,6 @@ function EventDetailContent() {
                             }`}
                           >
                             <div className="flex items-center gap-3.5">
-                              
                               <div
                                 className="w-12 h-12 rounded-xl shrink-0 border border-white/20 shadow-inner relative overflow-hidden"
                                 style={{ background: t.bgStyle }}
@@ -489,7 +488,6 @@ function EventDetailContent() {
                               </div>
                             </div>
 
-                           
                             <div className="flex items-center -space-x-1.5 shrink-0">
                               {t.swatches.map((hex, i) => (
                                 <span
@@ -505,7 +503,6 @@ function EventDetailContent() {
                     </div>
                   </div>
 
-                  
                   <div>
                     <div className="flex items-center justify-between mb-3.5">
                       <span className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
@@ -514,7 +511,6 @@ function EventDetailContent() {
                       </span>
 
                       <div className="flex items-center gap-3">
-                        
                         <div className="flex items-center gap-1">
                           {[0, 1, 2].map((slot) => (
                             <span
@@ -585,7 +581,6 @@ function EventDetailContent() {
                   </div>
                 </div>
 
-                
                 <div
                   className="lg:col-span-6 p-6 sm:p-10 flex flex-col items-center justify-center relative overflow-hidden"
                   style={{
@@ -594,13 +589,11 @@ function EventDetailContent() {
                     backgroundSize: "20px 20px",
                   }}
                 >
-                 
                   <div
                     className="w-72 h-72 rounded-full blur-[90px] opacity-35 absolute pointer-events-none transition-all duration-700"
                     style={{ background: activeThemeObj.bgStyle }}
                   />
 
-                  
                   <div
                     onMouseMove={handleCardMouseMove}
                     onMouseLeave={handleCardMouseLeave}
@@ -614,13 +607,11 @@ function EventDetailContent() {
                     }}
                     className="w-full max-w-[360px] rounded-[28px] shadow-[0_25px_70px_rgba(0,0,0,0.85)] relative overflow-hidden border border-white/25 select-none"
                   >
-                   
                     <div
                       className="absolute inset-0 transition-all duration-500"
                       style={{ background: activeThemeObj.bgStyle }}
                     />
 
-                    
                     <div className="absolute inset-x-0 top-0 h-44 opacity-25 mix-blend-overlay pointer-events-none">
                       <img
                         src={event.imageUrl}
@@ -630,7 +621,6 @@ function EventDetailContent() {
                       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black" />
                     </div>
 
-                   
                     <div
                       className="absolute inset-0 pointer-events-none transition-opacity duration-300"
                       style={{
@@ -639,12 +629,9 @@ function EventDetailContent() {
                       }}
                     />
 
-                    
                     <div className="relative z-10 p-6">
-                      
                       <div className="w-16 h-3 rounded-full bg-[#0c0c10] border border-white/25 mx-auto mb-5 shadow-inner" />
 
-                      
                       <div className="flex items-center justify-between gap-2">
                         <span className="px-3 py-1 rounded-full text-[11px] font-extrabold uppercase tracking-wider bg-black/35 text-white border border-white/25 backdrop-blur-md">
                           <Sparkles className="w-3 h-3 inline mr-1" />
@@ -656,7 +643,6 @@ function EventDetailContent() {
                         </span>
                       </div>
 
-                    
                       <div className="mt-5">
                         <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-white/70">
                           OFFICIAL ACCESS PASS
@@ -689,7 +675,6 @@ function EventDetailContent() {
                         </div>
                       </div>
 
-                     
                       <div className="mt-5 min-h-[76px] rounded-2xl bg-black/20 border border-dashed border-white/25 px-4 py-3 flex items-center justify-between">
                         {stickers.length === 0 ? (
                           <p className="text-xs text-white/75 italic mx-auto text-center">
@@ -725,14 +710,12 @@ function EventDetailContent() {
                       </div>
                     </div>
 
-    
                     <div className="relative flex items-center justify-between my-1">
                       <div className="w-5 h-5 rounded-full bg-[#0c0c10] -ml-2.5 border-r border-white/25" />
                       <div className="flex-1 border-t-2 border-dashed border-white/30 mx-2" />
                       <div className="w-5 h-5 rounded-full bg-[#0c0c10] -mr-2.5 border-l border-white/25" />
                     </div>
 
-                    {/* Ticket Stub Footer with Attendee Name & QR/Barcode */}
                     <div className="relative z-10 px-6 pb-6 pt-3 bg-black/30 backdrop-blur-md flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-white/60 block">

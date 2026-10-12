@@ -7,79 +7,117 @@ import {
   User,
   Lock,
   Mail,
-  Briefcase,
   ArrowLeft,
   Loader2,
   ShieldCheck,
+  Eye,
+  EyeOff,
+  Sparkles,
 } from "lucide-react";
+import { fetchJson } from "@/lib/fetchJson";
 import "./auth.css";
 
 function AuthFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialMode = searchParams.get("mode") === "register";
-  const initialRole = searchParams.get("role") === "admin" ? "admin" : "user";
 
-  const [isRegisterMode, setIsRegisterMode] = useState(initialMode);
+  const [registerOverride, setRegisterOverride] = useState<boolean | null>(
+    null
+  );
+  const [roleOverride, setRoleOverride] = useState<"user" | "admin" | null>(
+    null
+  );
+  const [emailOverride, setEmailOverride] = useState<string | null>(null);
+  const [passwordOverride, setPasswordOverride] = useState<string | null>(null);
+
+  const [isAnimating, setIsAnimating] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Login State
-  const [loginEmail, setLoginEmail] = useState(
-    initialRole === "admin" ? "admin@fyerx.com" : ""
-  );
-  const [loginPassword, setLoginPassword] = useState(
-    initialRole === "admin" ? "admin123" : ""
-  );
-  const [loginRole, setLoginRole] = useState<"user" | "admin">(initialRole);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
-  // Register State
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
 
+  const isRegisterMode =
+    registerOverride ?? searchParams.get("mode") === "register";
+  const loginRole =
+    roleOverride ?? (searchParams.get("role") === "admin" ? "admin" : "user");
+  const loginEmail =
+    emailOverride ?? (loginRole === "admin" ? "sahil@admin.com" : "");
+  const loginPassword =
+    passwordOverride ?? (loginRole === "admin" ? "admin123" : "");
+
   function changeView() {
-    setIsRegisterMode((prev) => !prev);
+    setIsAnimating(true);
+    setRegisterOverride(!isRegisterMode);
     setError("");
+    setLoading(false);
+    setTimeout(() => setIsAnimating(false), 900);
+  }
+
+  function handleSelectRole(role: "user" | "admin") {
+    setRoleOverride(role);
+    setError("");
+    setLoading(false);
+    if (role === "admin") {
+      setEmailOverride("sahil@admin.com");
+      setPasswordOverride("admin123");
+    } else {
+      if (loginEmail.toLowerCase() === "sahil@admin.com") {
+        setEmailOverride("");
+        setPasswordOverride("");
+      }
+    }
   }
 
   function fillDemoAdmin() {
-    setLoginRole("admin");
-    setLoginEmail("admin@fyerx.com");
-    setLoginPassword("admin123");
+    setRoleOverride("admin");
+    setEmailOverride("sahil@admin.com");
+    setPasswordOverride("admin123");
     setError("");
+    setLoading(false);
   }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
 
     try {
       const endpoint =
-        loginRole === "admin" || loginEmail.toLowerCase() === "admin@fyerx.com"
-          ? "/api/admin/login"
-          : "/api/auth/login";
+        loginRole === "admin" ? "/api/admin/login" : "/api/auth/login";
 
-      const res = await fetch(endpoint, {
+      const { ok, data } = await fetchJson<{
+        token?: string;
+        error?: string;
+        user?: { favouriteCategories?: string[] };
+      }>(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Login failed");
+      if (!ok) {
+        setError(data.error || "Invalid credentials");
         setLoading(false);
         return;
       }
 
-      if (endpoint === "/api/admin/login") {
-        localStorage.setItem("admin_token", data.token);
+      if (loginRole === "admin") {
+        if (data.token) {
+          localStorage.setItem("admin_token", data.token);
+        }
+        setLoading(false);
         router.push("/admin");
       } else {
-        localStorage.setItem("token", data.token);
-        // Redirect to onboarding/feed if no favourite categories picked yet
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+        }
+        setLoading(false);
         if (!data.user?.favouriteCategories?.length) {
           router.push("/?onboarding=true");
         } else {
@@ -87,19 +125,27 @@ function AuthFormContent() {
         }
       }
       router.refresh();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Connection error. Please try again."
+      );
       setLoading(false);
     }
   }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
     setError("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/signup", {
+      const { ok, data } = await fetchJson<{
+        token?: string;
+        error?: string;
+      }>("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -109,94 +155,140 @@ function AuthFormContent() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
+      if (!ok) {
         setError(data.error || "Registration failed");
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      // After signup, let user pick their favourite categories (Requirement B7)
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+      setLoading(false);
       router.push("/?onboarding=true");
       router.refresh();
-    } catch {
-      setError("Network error. Please try again.");
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Connection error. Please try again."
+      );
       setLoading(false);
     }
   }
 
   return (
-    <div className="auth-parent">
-      <Link
-        href="/"
-        className="fixed top-5 left-5 z-50 inline-flex items-center gap-2 bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow-sm text-sm font-semibold text-slate-700 hover:text-emerald-700 transition-colors"
+    <div className="auth-parent" suppressHydrationWarning>
+      <div
+        suppressHydrationWarning
+        className={`auth-container ${isRegisterMode ? "active" : ""} ${
+          isAnimating ? "animating" : ""
+        }`}
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Events
-      </Link>
-
-      <div className={`auth-container ${isRegisterMode ? "active" : ""}`}>
-        {/* LOGIN FORM */}
         <div className="form-box login">
-          <form onSubmit={handleLogin}>
-            <h1>Login</h1>
+          <form onSubmit={handleLogin} suppressHydrationWarning>
+            <Link href="/" className="back-inline-link">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to EventPulse
+            </Link>
+
+            <h1>Welcome Back</h1>
+            <p className="text-slate-500 !mt-1 !mb-3">
+              Sign in to access your events & saved passes
+            </p>
+
+            <div className="role-switcher">
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={() => handleSelectRole("user")}
+                className={`role-pill ${loginRole === "user" ? "active" : ""}`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                Visitor Member
+              </button>
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={() => handleSelectRole("admin")}
+                className={`role-pill ${loginRole === "admin" ? "active" : ""}`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                Admin Portal
+              </button>
+            </div>
 
             {error && !isRegisterMode && (
               <div className="auth-error">{error}</div>
             )}
 
             <div className="input-box">
+              <Mail className="field-icon w-4 h-4" />
               <input
                 type="email"
                 placeholder="Email Address"
                 required
+                suppressHydrationWarning
                 value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
+                onChange={(e) => setEmailOverride(e.target.value)}
               />
-              <Mail className="icon w-5 h-5" />
             </div>
 
             <div className="input-box">
+              <Lock className="field-icon w-4 h-4" />
               <input
-                type="password"
+                type={showLoginPassword ? "text" : "password"}
                 placeholder="Password"
                 required
+                suppressHydrationWarning
                 value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
+                onChange={(e) => setPasswordOverride(e.target.value)}
               />
-              <Lock className="icon w-5 h-5" />
-            </div>
-
-            <div className="input-box">
-              <select
-                value={loginRole}
-                onChange={(e) =>
-                  setLoginRole(e.target.value as "user" | "admin")
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={() => setShowLoginPassword((prev) => !prev)}
+                className="eye-btn"
+                aria-label={
+                  showLoginPassword ? "Hide password" : "Show password"
                 }
+                title={showLoginPassword ? "Hide password" : "Show password"}
               >
-                <option value="user">Visitor / Member</option>
-                <option value="admin">Admin Portal</option>
-              </select>
-              <Briefcase className="icon w-5 h-5" />
-            </div>
-
-            <div className="forgot-link">
-              <span className="text-slate-500">Quick Demo Access:</span>
-              <button type="button" onClick={fillDemoAdmin}>
-                <ShieldCheck className="w-3.5 h-3.5 inline mr-1" />
-                Fill Admin Login
+                {showLoginPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
               </button>
             </div>
 
-            <button type="submit" disabled={loading} className="auth-btn">
+            <div className="forgot-link">
+              <span className="text-slate-400">Testing the assignment?</span>
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={fillDemoAdmin}
+              >
+                <ShieldCheck className="w-3 h-3 inline mr-1" />
+                Auto-Fill Admin
+              </button>
+            </div>
+
+            <button
+              type="submit"
+              suppressHydrationWarning
+              disabled={loading}
+              className="auth-btn"
+            >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Signing in...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span suppressHydrationWarning>Signing in...</span>
                 </>
               ) : (
-                "Login"
+                <span suppressHydrationWarning>
+                  {loginRole === "admin" ? "Sign In as Admin" : "Sign In"}
+                </span>
               )}
             </button>
 
@@ -204,76 +296,120 @@ function AuthFormContent() {
           </form>
         </div>
 
-        {/* REGISTER FORM */}
         <div className="form-box register">
-          <form onSubmit={handleRegister}>
-            <h1>Registration</h1>
+          <form onSubmit={handleRegister} suppressHydrationWarning>
+            <Link href="/" className="back-inline-link">
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to EventPulse
+            </Link>
+
+            <h1>Create Account</h1>
+            <p className="text-slate-500 !mt-1 !mb-4">
+              Join to customize event passes & set reminders
+            </p>
 
             {error && isRegisterMode && (
               <div className="auth-error">{error}</div>
             )}
 
             <div className="input-box">
+              <User className="field-icon w-4 h-4" />
               <input
                 type="text"
                 placeholder="Full Name"
                 required
+                suppressHydrationWarning
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
               />
-              <User className="icon w-5 h-5" />
             </div>
 
             <div className="input-box">
+              <Mail className="field-icon w-4 h-4" />
               <input
                 type="email"
                 placeholder="Email Address"
                 required
+                suppressHydrationWarning
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
               />
-              <Mail className="icon w-5 h-5" />
             </div>
 
             <div className="input-box">
+              <Lock className="field-icon w-4 h-4" />
               <input
-                type="password"
-                placeholder="Password (min 6 chars)"
+                type={showRegPassword ? "text" : "password"}
+                placeholder="Password (min 6 characters)"
                 required
                 minLength={6}
+                suppressHydrationWarning
                 value={regPassword}
                 onChange={(e) => setRegPassword(e.target.value)}
               />
-              <Lock className="icon w-5 h-5" />
+              <button
+                type="button"
+                suppressHydrationWarning
+                onClick={() => setShowRegPassword((prev) => !prev)}
+                className="eye-btn"
+                aria-label={showRegPassword ? "Hide password" : "Show password"}
+                title={showRegPassword ? "Hide password" : "Show password"}
+              >
+                {showRegPassword ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
             </div>
 
-            <button type="submit" disabled={loading} className="auth-btn">
+            <button
+              type="submit"
+              suppressHydrationWarning
+              disabled={loading}
+              className="auth-btn mt-2"
+            >
               {loading ? (
                 <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Creating Account...
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Creating Account...</span>
                 </>
               ) : (
-                "Register"
+                <span>Create Free Account</span>
               )}
             </button>
           </form>
         </div>
 
-        {/* SLIDING GREEN TOGGLE PANELS */}
         <div className="toggle-box">
           <div className="toggle-panel toggle-left">
             <h1>Hello, Welcome!</h1>
-            <p>Don&apos;t have an account to save events & custom cards?</p>
-            <button type="button" className="auth-btn" onClick={changeView}>
+            <p>
+              New to EventPulse? Create an account to curate your personal event
+              feed and design collectible passes.
+            </p>
+            <button
+              type="button"
+              suppressHydrationWarning
+              className="auth-btn"
+              onClick={changeView}
+            >
               Register
             </button>
           </div>
 
           <div className="toggle-panel toggle-right">
             <h1>Welcome Back!</h1>
-            <p>Already have an account?</p>
-            <button type="button" className="auth-btn" onClick={changeView}>
+            <p>
+              Already have an EventPulse account? Sign in to view your saved
+              reminders and custom cards.
+            </p>
+            <button
+              type="button"
+              suppressHydrationWarning
+              className="auth-btn"
+              onClick={changeView}
+            >
               Login
             </button>
           </div>

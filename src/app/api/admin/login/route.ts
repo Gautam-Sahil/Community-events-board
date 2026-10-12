@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { signToken } from "@/lib/auth";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@fyerx.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "sahil@admin.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 export async function POST(req: NextRequest) {
