@@ -1,69 +1,342 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect, Suspense } from "react";
+import {
+  Search,
+  MapPin,
+  Filter,
+  Loader2,
+  CalendarX,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
+} from "lucide-react";
+import Navbar from "@/components/Navbar";
+import EventCard, { EventItem } from "@/components/EventCard";
+
+const CATEGORIES = ["All", "Music", "Workshop", "Food", "Sports", "Kids"];
+
+interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  favouriteCategories: string[];
+  reminders: string[];
+}
+
+function EventsBoardContent() {
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // Filter & Pagination States (Requirement B5)
+  const [category, setCategory] = useState("All");
+  const [city, setCity] = useState("All");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+
+  // Data States
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Load current user profile
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+          setIsAdmin(data.isAdmin);
+        }
+      } catch {
+        // Not logged in
+      }
+    }
+    loadUser();
+  }, []);
+
+  // Fetch filtered & paginated events whenever category, city, search, or page changes
+  useEffect(() => {
+    let active = true;
+    async function loadEvents() {
+      setLoading(true);
+      setError("");
+      try {
+        const params = new URLSearchParams({
+          category,
+          city,
+          search,
+          page: String(page),
+          limit: "6",
+        });
+
+        const res = await fetch(`/api/events?${params.toString()}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to load events");
+
+        if (active) {
+          setEvents(data.events || []);
+          setTotalPages(data.totalPages || 1);
+          setTotal(data.total || 0);
+          if (data.cities?.length) {
+            setCities(data.cities);
+          }
+        }
+      } catch (err: unknown) {
+        if (active) {
+          setError(
+            err instanceof Error ? err.message : "Error loading events"
+          );
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    const timer = setTimeout(loadEvents, 200);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [category, city, search, page]);
+
+  function handleResetFilters() {
+    setCategory("All");
+    setCity("All");
+    setSearch("");
+    setPage(1);
+  }
+
+  function handleReminderSync(eventId: string, isReminded: boolean) {
+    if (!user) return;
+    const nextReminders = isReminded
+      ? [...user.reminders, eventId]
+      : user.reminders.filter((id) => id !== eventId);
+    setUser({ ...user, reminders: nextReminders });
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Navbar user={user} isAdmin={isAdmin} onUserUpdate={setUser} />
+
+      {/* Hero & Filter Section */}
+      <section className="bg-emerald-900 text-white py-10 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
+            Discover Local Community Events
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-emerald-100 text-sm sm:text-base mt-2 max-w-2xl">
+            Browse upcoming music nights, hands-on workshops, food carnivals,
+            and sports meetups happening near you.
           </p>
+
+          {/* Combined Filter Bar: Search + City + Category */}
+          <div className="mt-6 bg-white p-3 sm:p-4 rounded-2xl shadow-lg text-slate-900 grid grid-cols-1 md:grid-cols-12 gap-3">
+            {/* Text Search */}
+            <div className="md:col-span-5 relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Search events (e.g., night, coffee, AI)..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              />
+            </div>
+
+            {/* City Filter */}
+            <div className="md:col-span-3 relative">
+              <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <select
+                value={city}
+                onChange={(e) => {
+                  setCity(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+              >
+                <option value="All">All Cities</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Category Dropdown (Mobile/Tablet) + Reset */}
+            <div className="md:col-span-4 flex items-center gap-2">
+              <div className="relative flex-1">
+                <Filter className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                >
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat === "All" ? "All Categories" : cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {(category !== "All" || city !== "All" || search !== "") && (
+                <button
+                  type="button"
+                  onClick={handleResetFilters}
+                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer"
+                  title="Clear all filters"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Quick Category Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pt-4 pb-1">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => {
+                  setCategory(cat);
+                  setPage(1);
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                  category === cat
+                    ? "bg-emerald-400 text-emerald-950 shadow-xs"
+                    : "bg-emerald-800/70 text-emerald-100 hover:bg-emerald-800"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Upcoming Events{" "}
+              <span className="text-sm font-normal text-slate-500">
+                ({total} found)
+              </span>
+            </h2>
+            <p className="text-xs text-slate-500">
+              Sorted by nearest upcoming date first
+            </p>
+          </div>
         </div>
+
+        {loading ? (
+          <div className="py-20 flex flex-col items-center justify-center text-slate-500">
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-3" />
+            <p className="text-sm font-medium">Loading upcoming events...</p>
+          </div>
+        ) : error ? (
+          <div className="py-16 bg-red-50 border border-red-200 rounded-2xl text-center p-6">
+            <p className="text-red-700 font-semibold">{error}</p>
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold cursor-pointer"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="py-20 bg-white border border-slate-200 rounded-2xl text-center p-6">
+            <CalendarX className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+            <h3 className="text-base font-bold text-slate-800">
+              No matching upcoming events
+            </h3>
+            <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
+              We couldn&apos;t find any active upcoming events matching your
+              current filters. Try clearing your search or switching cities.
+            </p>
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold cursor-pointer"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {events.map((ev) => (
+                <EventCard
+                  key={ev._id}
+                  event={ev}
+                  isLoggedIn={!!user}
+                  initialReminded={
+                    user ? user.reminders.includes(ev._id) : false
+                  }
+                  onReminderChange={handleReminderSync}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </button>
+                <span className="text-xs font-semibold text-slate-600 px-3">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1 cursor-pointer"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </main>
     </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm text-slate-500">
+          Loading Community Events Board...
+        </div>
+      }
+    >
+      <EventsBoardContent />
+    </Suspense>
   );
 }

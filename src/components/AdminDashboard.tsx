@@ -184,7 +184,7 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Left Column: Add Event Form */}
+       
         <section className="lg:col-span-5">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
             <div className="flex items-center gap-2 mb-5">
@@ -332,7 +332,6 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        {/* Right Column: Manage Events List */}
         <section className="lg:col-span-7">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
