@@ -59,7 +59,7 @@ export default function EventCard({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer \${token}` } : {}),
+          ...(token ? { Authorization: "Bearer " + token } : {}),
         },
         body: JSON.stringify({ eventId: event._id }),
       });
@@ -84,42 +84,46 @@ export default function EventCard({
     }
   }
 
+  const eventUrl = "/events/" + event._id;
+
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+    <div className="event-dark-card flex flex-col justify-between">
       <div>
-        <div className="relative h-48 bg-slate-100 overflow-hidden">
+        <div className="relative h-52 bg-zinc-900 overflow-hidden">
           <img
             src={event.imageUrl}
             alt={event.title}
-            className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover brightness-90 hover:scale-105 hover:brightness-100 transition-all duration-500"
           />
-          <span className="absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold bg-white/95 text-emerald-800 shadow-xs">
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111115] via-transparent to-black/30 pointer-events-none" />
+
+          <span className="absolute top-3.5 left-3.5 px-3 py-1 rounded-full text-xs font-bold bg-[#042f2e]/90 text-[#4ade80] border border-[#4ade80]/30 backdrop-blur-md">
             {event.category}
           </span>
-          <span className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold bg-slate-900/85 text-white backdrop-blur-xs">
+          <span className="absolute top-3.5 right-3.5 px-3 py-1 rounded-full text-xs font-bold bg-black/80 text-white border border-white/15 backdrop-blur-md">
             {formatIndianPrice(event.price)}
           </span>
         </div>
 
         <div className="p-5">
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-2">
-            <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-2.5">
+            <span className="inline-flex items-center gap-1 font-semibold text-[#4ade80]">
               <Calendar className="w-3.5 h-3.5" />
               {formatEventDate(event.date)}
             </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+            <span className="inline-flex items-center gap-1 text-slate-300">
+              <MapPin className="w-3.5 h-3.5 text-indigo-400" />
               {event.city}
             </span>
           </div>
 
-          <Link href={`/events/\${event._id}`}>
-            <h3 className="text-lg font-bold text-slate-900 hover:text-emerald-700 transition-colors line-clamp-1">
+          <Link href={eventUrl}>
+            <h3 className="text-lg font-bold text-white hover:text-[#4ade80] transition-colors line-clamp-1">
               {event.title}
             </h3>
           </Link>
 
-          <p className="text-sm text-slate-600 mt-1.5 line-clamp-2">
+          <p className="text-sm text-slate-400 mt-2 line-clamp-2 leading-relaxed">
             {event.description}
           </p>
         </div>
@@ -127,20 +131,20 @@ export default function EventCard({
 
       <div className="px-5 pb-5 pt-2">
         {errorMsg && (
-          <div className="mb-3 p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-1.5">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="mb-3 p-2.5 rounded-lg bg-red-950/80 border border-red-500/40 text-red-300 text-xs flex items-center gap-1.5">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        <div className="flex items-center gap-2.5 pt-3 border-t border-slate-300">
+        <div className="flex items-center gap-2.5 pt-3 border-t border-slate-800/80">
           <button
             type="button"
             onClick={handleRemindClick}
-            className={`flex-1 py-2 px-3 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer \${
+            className={`flex-1 py-2.5 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               reminded
-                ? "bg-emerald-600 text-black shadow-xs"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-700"
+                ? "bg-[#4ade80] text-zinc-950 shadow-[0_0_15px_rgba(74,222,128,0.4)]"
+                : "bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700"
             }`}
           >
             {reminded ? (
@@ -157,8 +161,8 @@ export default function EventCard({
           </button>
 
           <Link
-            href={`/events/\${event._id}`}
-            className="py-2 px-3.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 transition-colors inline-flex items-center gap-1.5"
+            href={eventUrl}
+            className="py-2.5 px-4 rounded-full text-xs font-semibold bg-[#042f2e] hover:bg-[#115e59] text-[#4ade80] border border-[#4ade80]/30 transition-colors inline-flex items-center gap-1.5"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Design Card

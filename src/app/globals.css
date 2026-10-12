@@ -1,26 +1,256 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-accent: #4ade80;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #787777 #1e1e1e;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: white;
+  background-color: #09090b;
+  overflow-x: hidden;
+  margin: 0;
+}
+
+.cinion-navbar {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 3.5rem;
+  backdrop-filter: blur(12px);
+  background-color: rgba(9, 9, 11, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  transition: background-color 0.3s;
+}
+
+.logo-gradient {
+  font-size: 1.65rem;
+  font-weight: 800;
+  background: linear-gradient(to right, #4ade80, #d9f99d, #34d399);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-decoration: none;
+  z-index: 60;
+  letter-spacing: -0.5px;
+}
+
+.rainbow {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+}
+
+.rainbow::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  background-position: 100% 50%;
+  background-repeat: no-repeat;
+  background-size: 50% 30%;
+  filter: blur(4px);
+  background-image: linear-gradient(#4ade80, #ffffff);
+  animation: rotate-gradient 6s linear infinite;
+}
+
+.cinion-nav-inner {
+  background-color: #042f2e;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  padding: 0.7rem 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.cinion-nav-inner a,
+.cinion-nav-inner button {
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.cinion-nav-inner a:hover,
+.cinion-nav-inner button:hover,
+.cinion-nav-inner a.active-link {
+  color: #4ade80;
+}
+
+.cinion-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  z-index: 60;
+}
+
+.button-bg {
+  background: conic-gradient(
+    from 0deg,
+    #00f5ff,
+    #ff00c7,
+    #ffd700,
+    #00ff85,
+    #8a2be2,
+    #00f5ff
+  );
+  background-size: 300% 300%;
+  animation: shine 4s ease-out infinite;
+  padding: 2.5px;
+  border-radius: 9999px;
+  transition: transform 0.3s;
+  display: inline-block;
+}
+
+.button-bg:hover {
+  transform: scale(1.05);
+}
+
+.login-btn {
+  background-color: #042f2e;
+  color: white;
+  border: none;
+  padding: 0.55rem 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.login-btn:hover {
+  background-color: #115e59;
+}
+
+@keyframes shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes rotate-gradient {
+  100% {
+    transform: rotate(1turn);
+  }
+}
+
+.community-wrapper {
+  background: linear-gradient(to bottom, #301469, #09090b);
+  border: 1px solid rgba(169, 146, 242, 0.2);
+  border-radius: 1.5rem;
+  max-width: 80rem;
+  margin: 0 auto;
+}
+
+.community-badge {
+  position: relative;
+  display: inline-block;
+  width: max-content;
+  padding: 2px;
+  border: none;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    #00f5ff,
+    #000,
+    #000,
+    #00f5ff,
+    #000,
+    #000,
+    #000,
+    #00f5ff
+  );
+  background-size: 300% 300%;
+  animation: shine 6s ease-out infinite;
+  overflow: hidden;
+}
+
+.community-badge span {
+  display: block;
+  padding: 0.45rem 1.4rem;
+  border-radius: 9999px;
+  background: #181223;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.text-gradient-only {
+  background: linear-gradient(to right, #4ade80, #a992f2, #dfab9b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.event-dark-card {
+  background: #111115;
+  border: 1px solid #1e293b;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.event-dark-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(74, 222, 128, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+}
+
+.custom-dark-input {
+  background-color: rgba(15, 23, 42, 0.75) !important;
+  border: 1px solid #334155 !important;
+  border-radius: 0.75rem !important;
+  color: white !important;
+  transition: all 0.2s !important;
+}
+
+.custom-dark-input:focus {
+  outline: none !important;
+  border-color: #4ade80 !important;
+  box-shadow: 0 0 0 1px #4ade80 !important;
+}
+
+.custom-dark-input::placeholder {
+  color: #94a3b8;
+}
+
+@media screen and (max-width: 768px) {
+  .cinion-navbar {
+    padding: 1rem 1.25rem;
+  }
 }

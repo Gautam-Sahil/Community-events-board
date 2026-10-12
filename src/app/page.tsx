@@ -28,13 +28,11 @@ function EventsBoardContent() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Filter & Pagination States (Requirement B5)
   const [category, setCategory] = useState("All");
   const [city, setCity] = useState("All");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
 
-  // Data States
   const [events, setEvents] = useState<EventItem[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -42,7 +40,6 @@ function EventsBoardContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Load current user profile
   useEffect(() => {
     async function loadUser() {
       try {
@@ -53,13 +50,12 @@ function EventsBoardContent() {
           setIsAdmin(data.isAdmin);
         }
       } catch {
-        // Not logged in
+        // Guest visitor
       }
     }
     loadUser();
   }, []);
 
-  // Fetch filtered & paginated events whenever category, city, search, or page changes
   useEffect(() => {
     let active = true;
     async function loadEvents() {
@@ -74,7 +70,7 @@ function EventsBoardContent() {
           limit: "6",
         });
 
-        const res = await fetch(`/api/events?${params.toString()}`);
+        const res = await fetch("/api/events?" + params.toString());
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load events");
 
@@ -120,23 +116,28 @@ function EventsBoardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-[#09090B] text-white flex flex-col">
       <Navbar user={user} isAdmin={isAdmin} onUserUpdate={setUser} />
 
-      {/* Hero & Filter Section */}
-      <section className="bg-emerald-900 text-white py-10 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-            Discover Local Community Events
+      
+      <section className="px-4 sm:px-6 lg:px-8 pt-6 pb-4">
+        <div className="community-wrapper p-6 sm:p-10 text-center shadow-2xl">
+          <div className="community-badge mx-auto mb-4">
+            <span>Community Events Board</span>
+          </div>
+
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight max-w-3xl mx-auto leading-tight">
+            Experience Live Events{" "}
+            <span className="text-gradient-only">Near Your City</span>
           </h1>
-          <p className="text-emerald-100 text-sm sm:text-base mt-2 max-w-2xl">
-            Browse upcoming music nights, hands-on workshops, food carnivals,
-            and sports meetups happening near you.
+
+          <p className="text-slate-300 text-sm sm:text-base max-w-xl mx-auto mt-3">
+            Discover acoustic music nights, workshops, street food carnivals,
+            and sports tournaments curated for your local community.
           </p>
 
-          {/* Combined Filter Bar: Search + City + Category */}
-          <div className="mt-6 bg-white p-3 sm:p-4 rounded-2xl shadow-lg text-slate-900 grid grid-cols-1 md:grid-cols-12 gap-3">
-            {/* Text Search */}
+         
+          <div className="mt-8 bg-black/50 backdrop-blur-md border border-slate-800 p-3 sm:p-4 rounded-2xl max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-3 text-left">
             <div className="md:col-span-5 relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
@@ -146,45 +147,49 @@ function EventsBoardContent() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Search events (e.g., night, coffee, AI)..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                placeholder="Search title or vibe (e.g., night, AI)..."
+                className="w-full pl-10 pr-4 py-2.5 custom-dark-input text-sm"
               />
             </div>
 
-            {/* City Filter */}
             <div className="md:col-span-3 relative">
-              <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <MapPin className="w-4 h-4 text-[#4ade80] absolute left-3.5 top-3.5" />
               <select
                 value={city}
                 onChange={(e) => {
                   setCity(e.target.value);
                   setPage(1);
                 }}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="w-full pl-10 pr-4 py-2.5 custom-dark-input text-sm"
               >
-                <option value="All">All Cities</option>
+                <option value="All" className="bg-zinc-900 text-white">
+                  All Cities
+                </option>
                 {cities.map((c) => (
-                  <option key={c} value={c}>
+                  <option key={c} value={c} className="bg-zinc-900 text-white">
                     {c}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Category Dropdown (Mobile/Tablet) + Reset */}
             <div className="md:col-span-4 flex items-center gap-2">
               <div className="relative flex-1">
-                <Filter className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                <Filter className="w-4 h-4 text-purple-400 absolute left-3.5 top-3.5" />
                 <select
                   value={category}
                   onChange={(e) => {
                     setCategory(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-100 text-sm text-slate-900 focus:bg-white focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full pl-10 pr-4 py-2.5 custom-dark-input text-sm"
                 >
                   {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
+                    <option
+                      key={cat}
+                      value={cat}
+                      className="bg-zinc-900 text-white"
+                    >
                       {cat === "All" ? "All Categories" : cat}
                     </option>
                   ))}
@@ -195,8 +200,7 @@ function EventsBoardContent() {
                 <button
                   type="button"
                   onClick={handleResetFilters}
-                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer"
-                  title="Clear all filters"
+                  className="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold inline-flex items-center gap-1 shrink-0 cursor-pointer border border-slate-700"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                   Reset
@@ -205,8 +209,8 @@ function EventsBoardContent() {
             </div>
           </div>
 
-          {/* Quick Category Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pt-4 pb-1">
+        
+          <div className="flex items-center justify-center gap-2 flex-wrap pt-5">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat}
@@ -215,10 +219,10 @@ function EventsBoardContent() {
                   setCategory(cat);
                   setPage(1);
                 }}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
+                className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                   category === cat
-                    ? "bg-emerald-400 text-emerald-950 shadow-xs"
-                    : "bg-emerald-800/70 text-emerald-100 hover:bg-emerald-800"
+                    ? "bg-[#4ade80] text-zinc-950 shadow-[0_0_15px_rgba(74,222,128,0.4)]"
+                    : "bg-white/5 text-slate-300 border border-white/10 hover:border-[#4ade80]/50"
                 }`}
               >
                 {cat}
@@ -228,52 +232,52 @@ function EventsBoardContent() {
         </div>
       </section>
 
-      {/* Main Content */}
+     
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 flex-1">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Upcoming Events{" "}
-              <span className="text-sm font-normal text-slate-500">
-                ({total} found)
+            <h2 className="text-xl font-bold text-white">
+              Upcoming Lineup{" "}
+              <span className="text-sm font-normal text-[#4ade80]">
+                ({total} active)
               </span>
             </h2>
-            <p className="text-xs text-slate-500">
-              Sorted by nearest upcoming date first
+            <p className="text-xs text-slate-400">
+              Sorted chronologically by nearest upcoming date
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-500">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-600 mb-3" />
-            <p className="text-sm font-medium">Loading upcoming events...</p>
+          <div className="py-20 flex flex-col items-center justify-center text-slate-400">
+            <Loader2 className="w-8 h-8 animate-spin text-[#4ade80] mb-3" />
+            <p className="text-sm">Loading upcoming events...</p>
           </div>
         ) : error ? (
-          <div className="py-16 bg-red-50 border border-red-200 rounded-2xl text-center p-6">
-            <p className="text-red-700 font-semibold">{error}</p>
+          <div className="py-16 bg-red-950/40 border border-red-500/30 rounded-2xl text-center p-6">
+            <p className="text-red-300 font-semibold">{error}</p>
             <button
               type="button"
               onClick={handleResetFilters}
-              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-semibold cursor-pointer"
+              className="mt-3 px-4 py-2 bg-red-600 text-white rounded-full text-xs font-semibold cursor-pointer"
             >
               Try Again
             </button>
           </div>
         ) : events.length === 0 ? (
-          <div className="py-20 bg-white border border-slate-200 rounded-2xl text-center p-6">
-            <CalendarX className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <h3 className="text-base font-bold text-slate-800">
+          <div className="py-20 bg-[#111115] border border-slate-800 rounded-3xl text-center p-6">
+            <CalendarX className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+            <h3 className="text-lg font-bold text-white">
               No matching upcoming events
             </h3>
-            <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-              We couldn&apos;t find any active upcoming events matching your
-              current filters. Try clearing your search or switching cities.
+            <p className="text-sm text-slate-400 mt-1 max-w-md mx-auto">
+              No active upcoming events matched your filter combination. Try
+              resetting your filters.
             </p>
             <button
               type="button"
               onClick={handleResetFilters}
-              className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold cursor-pointer"
+              className="mt-5 px-5 py-2.5 bg-[#4ade80] text-zinc-950 rounded-full text-xs font-bold cursor-pointer"
             >
               Clear All Filters
             </button>
@@ -294,26 +298,26 @@ function EventsBoardContent() {
               ))}
             </div>
 
-            {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="mt-10 flex items-center justify-center gap-3">
+              <div className="mt-12 flex items-center justify-center gap-4">
                 <button
                   type="button"
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1 cursor-pointer"
+                  className="px-5 py-2.5 rounded-full border border-slate-800 bg-[#111115] text-slate-200 text-xs font-semibold hover:border-[#4ade80] disabled:opacity-40 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </button>
-                <span className="text-xs font-semibold text-slate-600 px-3">
-                  Page {page} of {totalPages}
+                <span className="text-xs font-semibold text-slate-400 px-3">
+                  Page <span className="text-[#4ade80]">{page}</span> of{" "}
+                  {totalPages}
                 </span>
                 <button
                   type="button"
                   disabled={page >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 disabled:opacity-40 inline-flex items-center gap-1 cursor-pointer"
+                  className="px-5 py-2.5 rounded-full border border-slate-800 bg-[#111115] text-slate-200 text-xs font-semibold hover:border-[#4ade80] disabled:opacity-40 inline-flex items-center gap-1.5 cursor-pointer"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
@@ -331,8 +335,8 @@ export default function HomePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm text-slate-500">
-          Loading Community Events Board...
+        <div className="min-h-screen bg-[#09090B] flex items-center justify-center text-sm text-slate-400">
+          Loading EventPulse...
         </div>
       }
     >
