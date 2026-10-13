@@ -85,7 +85,7 @@ npm install
 Create a `.env.local` file in the project root:
 
 ```bash
-   MONGODB_URI=mongodb://127.0.0.1:27017/community-events-board
+   MONGODB_URI=mongodb+srv://<YOUR_USERNAME>:<YOUR_PASSWORD>@<YOUR_CLUSTER>.mongodb.net/community-events-board?retryWrites=true&w=majority
    JWT_SECRET=super_secret_jwt_key_2026_community_board
    ADMIN_EMAIL=sahil@admin.com
    ADMIN_PASSWORD=admin123
