@@ -1,48 +1,122 @@
-# EventPulse — Community Events Board
+# 🎫 EventPulse: Next-Gen Community Events Board
 
-A full-stack Community Events Board built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, and **MongoDB (Mongoose)**. Visitors can browse upcoming local events with combined filters, curate a personalized category feed, toggle instant optimistic reminders, and customize an interactive 3D Event Pass Card. Admins can publish events and toggle event visibility (`Active` / `Inactive`) with full server-side route and API protection.
+**A High-Performance, Full-Stack Local Events Platform**
+
+[![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](#)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](#)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](#)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](#)
 
 ---
 
-## 1. Quick Setup (Run in Under 5 Minutes)
+**EventPulse** is a highly optimized full-stack platform designed to handle browsing, curating, and managing local community events. Built strictly with Next.js App Router, TypeScript, and MongoDB, this system provides a highly tactile, zero-generic UI featuring a **Tactical Filter Console** and an **Interactive 3D Collectible Pass Studio**.
 
-### Prerequisites
-- **Node.js** v18.18+ (or v20+)
-- **MongoDB** (Local MongoDB on port `27017`, Docker, or a MongoDB Atlas URI)
+It explicitly handles authentic JWT authentication, optimistic UI updates, multi-parameter search filtering, and seamless device responsiveness.
 
-### Step-by-Step Installation
+---
 
-1. **Clone the repository and install dependencies:**
-   ```bash
-   git clone https://github.com/Gautam-Sahil/Community-events-board.git
-   cd community-events-board
-   npm install
-   ```
+## 🚀 Core Ecosystem Matrix
 
-2. **Configure environment variables:**
-   Create a `.env.local` file in the project root with the following variables:
-   ```env
+The platform is designed to guarantee secure routing, fluid user interactions, and robust data persistence.
+
+| Module | ⚡ Design Pattern | 🧠 Implementation Details |
+| :--- | :--- | :--- |
+| **Authentication Engine** | `Custom JWT & Middleware` | Uses `jose` and `bcryptjs` for secure hashing. Enforces strict server-side boundaries via Next.js Middleware and HTTP-only cookies to protect the Admin Portal. |
+| **Tactical Filter Console** | `Multi-Param Querying` | Combines Category, City Radar, and Text Search into a single deterministic query (`{ isActive: true, date: { $gte: now } }`). |
+| **Event Pass Studio** | `Interactive 3D UI` | Renders a physical VIP lanyard pass using CSS `perspective(1100px)`. Handles dynamic cursor tracking for foil glare and calculates organic die-cut sticker stamping angles. |
+| **Reminder System** | `Optimistic Rollback` | Flips "Remind Me" UI state instantly. Uses a background `fetchJson` wrapper to sync with MongoDB, automatically reverting the UI if the server connection fails. |
+
+---
+
+## 🏗️ System Architecture & Data Flow
+
+The system strictly decouples the client-side UI from the database logic, ensuring fast prerendering and secure API boundaries.
+
+```mermaid
+graph TD;
+    Client[Visitor / Admin UI] -->|1. Interact| Middleware[Next.js Middleware];
+    
+    Middleware -->|2. Verify JWT Cookie| API[API Route Handlers];
+    Middleware -.->|Unauthorized| Login[Login Redirect];
+    
+    API -->|3. Validate payload| DB[(MongoDB Atlas)];
+    
+    DB -.->|4. Return active events| API;
+    
+    API -->|5. JSON Response| Client;
+    
+    Client -->|6. Optimistic Update| State[Local React State];
+
+```
+
+---
+
+## ⚡ Performance & Reliability Matrix
+
+The platform addresses critical Next.js 16 rendering challenges—hydration errors, blocking routes, and file-locking—using strict software engineering principles.
+
+| Challenge | ⚡ Feature | 🧠 Implementation Details |
+| :--- | :--- | :--- |
+| **Hydration Mismatches** | Client State Synchronization | Extracts `useSearchParams` logic out of initial state declarations to prevent server/client HTML drift during first paint. |
+| **Blocking Routes** | `<Suspense>` Boundaries | Wraps dynamic hooks (`useParams`) inside React Suspense boundaries, preventing Next.js 16 from aborting static prerenders. |
+| **Windows EPERM Locks** | `fetchJson` Polling | Implements an intelligent retry mechanism that catches transient Next.js `.tmp` file compilation errors and retries the fetch gracefully. |
+| **UI Jitter** | Optimistic Execution | Updates complex UI states (like adding stickers or setting reminders) instantly, masking network latency and ensuring native-app fluidity. |
+
+---
+
+
+## ⚙️ Installation & Development
+
+To set up and run the Community Events Board locally:
+
+### **1. Clone the Repository**
+
+```bash
+git clone https://github.com/Gautam-Sahil/Community-events-board.git
+cd community-events-board
+npm install
+```
+
+### **2. Configure the Environment**
+
+Create a `.env.local` file in the project root:
+
+```bash
    MONGODB_URI=mongodb://127.0.0.1:27017/community-events-board
    JWT_SECRET=super_secret_jwt_key_2026_community_board
    ADMIN_EMAIL=sahil@admin.com
    ADMIN_PASSWORD=admin123
-   ```
+```
 
-3. **Seed the database with 15 sample events:**
-   Seeds 15 events across `Music`, `Workshop`, `Food`, `Sports`, and `Kids` in multiple cities (including active upcoming events, inactive events, and past events, plus the `"Music" + "Coimbatore" + "night"` test cases):
-   ```bash
-   npm run seed
-   ```
+### **3. Seed the Database**
 
-4. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+Generates 15 sample events across various categories, cities, and timelines, including inactive and past events for strict filter testing.
+
+```bash
+npm run seed
+```
+
+### **4. Launch the Platform**
+
+Starts the Next.js development server for local testing.
+
+```bash
+npm run dev
+```
+
+### **5. Access the Admin Dashboard**
+
+Open the application in your browser and log in as an administrator using the Auto-Fill button.
+
+```bash
+http://localhost:3000/login?role=admin
+```
+
+**Note:** Ensure MongoDB is running locally before launching the application. Replace the placeholder repository URL with your actual Git repository URL before cloning.
 
 ---
 
-## 2. Admin & Visitor Credentials
+## Admin & Visitor Credentials
 
 ### Admin Portal Login
 - **Login URL:** [http://localhost:3000/login?role=admin](http://localhost:3000/login?role=admin) (or click **Admin** in the top navigation bar)
@@ -56,7 +130,7 @@ A full-stack Community Events Board built with **Next.js 16 (App Router)**, **Ty
 
 ---
 
-## 3. JSON API Reference (Web & Mobile Ready)
+## JSON API Reference (Web & Mobile Ready)
 
 All web pages communicate exclusively with decoupled JSON API routes. Every protected endpoint accepts **both** `Authorization: Bearer <token>` headers (for mobile apps) and `httpOnly` cookies (for web sessions).
 
@@ -79,7 +153,7 @@ All web pages communicate exclusively with decoupled JSON API routes. Every prot
 
 ---
 
-## 4. Technical Architecture Answers
+##  Technical Architecture Answers
 
 ### 1. Show your database structure. Why did you design it this way?
 - **`Event`:** `{ title, category, city, date, price, description, imageUrl, isActive, timestamps }`
@@ -105,9 +179,3 @@ Admin protection is enforced on the server across three layers using `jose` (HS2
 - Includes Indian currency formatting (`₹1,50,000`), friendly IST date formatting (`Sat, 18 Oct, 6:30 PM`), optimistic UI rollback on `Remind Me`, persistent 3D Card Designer, and responsive mobile/desktop layouts.
 
 ---
-
-## 6. AI Tools Disclosure
-AI assistance (ChatGPT / Gemini) was used during development for:
-- Structuring the initial Mongoose schema boilerplate and generating realistic descriptions/Unsplash URLs for the 15 seed events in `src/scripts/seed.ts`.
-- Refining CSS keyframe animations and 3D perspective tilt math (`rotateX` / `rotateY`) on the Event Pass Card Designer.
-All API routes, authentication guards, database queries, and component state logic were reviewed, tested, and verified manually.
