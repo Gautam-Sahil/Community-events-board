@@ -1,3 +1,4 @@
+
 # 🎫 EventPulse: Next-Gen Community Events Board
 
 **A High-Performance, Full-Stack Local Events Platform**
@@ -14,7 +15,9 @@
 It explicitly handles authentic JWT authentication, optimistic UI updates, multi-parameter search filtering, and seamless device responsiveness.
 
 ---
+<img width="2620" height="1484" alt="localhost_3000_ (1)" src="https://github.com/user-attachments/assets/4216eeac-d95d-4aa9-ac62-3b12eb6e93e8" />
 
+---
 ## 🚀 Core Ecosystem Matrix
 
 The platform is designed to guarantee secure routing, fluid user interactions, and robust data persistence.
