@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   User,
@@ -18,7 +18,6 @@ import { fetchJson } from "@/lib/fetchJson";
 import "./auth.css";
 
 function AuthFormContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [registerOverride, setRegisterOverride] = useState<boolean | null>(
@@ -108,23 +107,24 @@ function AuthFormContent() {
       }
 
       if (loginRole === "admin") {
+        localStorage.removeItem("token");
         if (data.token) {
           localStorage.setItem("admin_token", data.token);
         }
         setLoading(false);
-        router.push("/admin");
+        window.location.href = "/admin";
       } else {
+        localStorage.removeItem("admin_token");
         if (data.token) {
           localStorage.setItem("token", data.token);
         }
         setLoading(false);
         if (!data.user?.favouriteCategories?.length) {
-          router.push("/?onboarding=true");
+          window.location.href = "/?onboarding=true";
         } else {
-          router.push("/feed");
+          window.location.href = "/feed";
         }
       }
-      router.refresh();
     } catch (err: unknown) {
       setError(
         err instanceof Error
@@ -161,12 +161,12 @@ function AuthFormContent() {
         return;
       }
 
+      localStorage.removeItem("admin_token");
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
       setLoading(false);
-      router.push("/?onboarding=true");
-      router.refresh();
+      window.location.href = "/?onboarding=true";
     } catch (err: unknown) {
       setError(
         err instanceof Error

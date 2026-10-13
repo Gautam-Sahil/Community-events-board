@@ -94,7 +94,7 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
         onUserUpdate?.(updated);
         closeModal();
         if (searchParams.get("onboarding") === "true") {
-          router.push("/feed");
+          window.location.href = "/feed";
         }
       }
     } finally {
@@ -106,10 +106,7 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
     await fetch("/api/auth/logout", { method: "POST" });
     localStorage.removeItem("token");
     localStorage.removeItem("admin_token");
-    onUserUpdate?.(null);
-    setMobileMenuOpen(false);
-    router.push("/");
-    router.refresh();
+    window.location.href = "/";
   }
 
   return (
@@ -119,7 +116,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
           EventPulse
         </Link>
 
-        
         <div className="rainbow hidden md:block">
           <div className="cinion-nav-inner">
             <Link href="/" className={pathname === "/" ? "active-link" : ""}>
@@ -130,7 +126,7 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
               href="/feed"
               className={pathname === "/feed" ? "active-link" : ""}
             >
-              
+              <Heart className="w-4 h-4 text-[#4ade80]" />
               My Feed
             </Link>
 
@@ -151,7 +147,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
           </div>
         </div>
 
-        
         <div className="cinion-right">
           {user ? (
             <div className="hidden sm:flex items-center gap-3">
@@ -175,7 +170,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
             </div>
           )}
 
-          
           <button
             type="button"
             onClick={() => setMobileMenuOpen((prev) => !prev)}
@@ -191,19 +185,15 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
         </div>
       </nav>
 
-      
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[999] md:hidden flex justify-end">
-         
           <div
             onClick={() => setMobileMenuOpen(false)}
             className="fixed inset-0 bg-black/80 backdrop-blur-md transition-opacity"
           />
 
-          
           <div className="relative z-10 w-[88%] max-w-sm h-full bg-[#09090b] border-l border-[#4ade80]/25 flex flex-col justify-between p-6 overflow-y-auto shadow-[-20px_0_50px_rgba(0,0,0,0.9)]">
             <div>
-              
               <div className="flex items-center justify-between pb-6 border-b border-white/10">
                 <div>
                   <span className="logo-gradient text-2xl block">
@@ -224,7 +214,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
                 </button>
               </div>
 
-             
               {user && (
                 <div className="mt-5 p-4 rounded-2xl bg-[#042f2e]/40 border border-[#4ade80]/30 flex items-center justify-between">
                   <div>
@@ -240,7 +229,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
                 </div>
               )}
 
-             
               <div className="mt-6 space-y-3">
                 <Link
                   href="/"
@@ -340,7 +328,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
               </div>
             </div>
 
-            
             <div className="pt-6 border-t border-white/10 mt-6">
               {user ? (
                 <button
@@ -367,7 +354,6 @@ export default function Navbar({ user, isAdmin, onUserUpdate }: NavbarProps) {
         </div>
       )}
 
-      
       {showCategoryModal && (
         <div className="fixed inset-0 z-[999] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-[#111115] rounded-3xl max-w-md w-full p-7 shadow-2xl border border-[#4ade80]/30 text-white">

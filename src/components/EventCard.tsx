@@ -56,7 +56,7 @@ export default function EventCard({
 
     try {
       const token = localStorage.getItem("token");
-      const { ok, data } = await fetchJson<{ error?: string }>(
+      const { ok, status, data } = await fetchJson<{ error?: string }>(
         "/api/user/reminders",
         {
           method: "POST",
@@ -68,12 +68,11 @@ export default function EventCard({
         }
       );
 
-      if (!ok) {
+      if (!ok || status === 401) {
         throw new Error(
-          data.error ||
-            (isLoggedIn
-              ? "Failed to save reminder"
-              : "Please log in to save event reminders")
+          status === 401
+            ? "Please log in to save event reminders"
+            : data.error || "Failed to save reminder"
         );
       }
       setOptimisticReminded(null);

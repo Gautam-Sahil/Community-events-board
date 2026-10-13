@@ -262,7 +262,7 @@ function EventDetailContent() {
 
     try {
       const token = localStorage.getItem("token");
-      const { ok, data } = await fetchJson<{ error?: string }>(
+      const { ok, status, data } = await fetchJson<{ error?: string }>(
         "/api/user/reminders",
         {
           method: "POST",
@@ -274,9 +274,11 @@ function EventDetailContent() {
         }
       );
 
-      if (!ok) {
+      if (!ok || status === 401) {
         throw new Error(
-          data.error || "Please log in first to save event reminders"
+          status === 401
+            ? "Please log in to save event reminders"
+            : data.error || "Failed to save reminder"
         );
       }
     } catch (err: unknown) {
